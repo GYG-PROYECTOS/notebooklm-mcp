@@ -26,6 +26,7 @@
  *   HEADLESS - Run browser in headless mode (true/false)
  *   MAX_SESSIONS - Maximum concurrent sessions (default: 10)
  *   SESSION_TIMEOUT - Session timeout in seconds (default: 900)
+ *   PORT - HTTP health check port (default: 3000)
  *
  * Based on the Python NotebookLM API implementation
  */
@@ -42,6 +43,7 @@ import {
   Tool,
   Resource,
 } from '@modelcontextprotocol/sdk/types.js';
+import * as http from 'http';
 
 import { AuthManager } from './auth/auth-manager.js';
 import { SessionManager } from './session/session-manager.js';
@@ -60,6 +62,7 @@ class NotebookLMMCPServer {
   private library: NotebookLibrary;
   private toolHandlers: ToolHandlers;
   private toolDefinitions: Tool[];
+  private healthCheckServer: http.Server | null = null;
 
   constructor() {
     // Initialize MCP Server
@@ -93,6 +96,36 @@ class NotebookLMMCPServer {
     log.info(`  Version: 1.3.5`);
     log.info(`  Node: ${process.version}`);
     log.info(`  Platform: ${process.platform}`);
+  }
+
+  /**
+   * Start HTTP health check server on port 3000
+   * This runs independently and does not block the STDIO server
+   */
+  private startHealthCheckServer(): void {
+    const port = parseInt(process.env.PORT || '3000', 10);
+
+    this.healthCheckServer = http.createServer((req, res) => {
+      if (req.url === '/health' && req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end('OK');
+      } else {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Not Found');
+      }
+    });
+
+    this.healthCheckServer.listen(port, '0.0.0.0', () => {
+      log.info(`💚 Health check server listening on port ${port}`);
+    });
+
+    this.healthCheckServer.on('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE') {
+        log.warning(`⚠️  Port ${port} is already in use, health check may not work`);
+      } else {
+        log.error(`❌ Health check server error: ${err.message}`);
+      }
+    });
   }
 
   /**
@@ -498,8 +531,7 @@ class NotebookLMMCPServer {
           case 'delete_source':
             result = await this.toolHandlers.handleDeleteSource(
               args as {
-                source_id?: string;
-                source_name?: string;
+                source_id: string;
                 notebook_url?: string;
                 session_id?: string;
               }
@@ -509,11 +541,12 @@ class NotebookLMMCPServer {
           case 'generate_content':
             result = await this.toolHandlers.handleGenerateContent(
               args as {
-                content_type: 'audio_overview';
-                custom_instructions?: string;
+                prompt: string;
+                content_type?: string;
                 notebook_url?: string;
                 session_id?: string;
-              }
+              },
+              sendProgress
             );
             break;
 
@@ -529,25 +562,20 @@ class NotebookLMMCPServer {
           case 'download_content':
             result = await this.toolHandlers.handleDownloadContent(
               args as {
-                content_type:
-                  | 'audio_overview'
-                  | 'video'
-                  | 'infographic'
-                  | 'presentation'
-                  | 'data_table';
-                output_path?: string;
+                content_id: string;
+                format?: 'txt' | 'md' | 'docx' | 'pdf';
                 notebook_url?: string;
                 session_id?: string;
               }
             );
             break;
 
+          // Studio Tools
           case 'create_note':
             result = await this.toolHandlers.handleCreateNote(
               args as {
-                title: string;
                 content: string;
-                notebook_url?: string;
+                title?: string;
                 session_id?: string;
               }
             );
@@ -556,9 +584,8 @@ class NotebookLMMCPServer {
           case 'save_chat_to_note':
             result = await this.toolHandlers.handleSaveChatToNote(
               args as {
+                session_id: string;
                 title?: string;
-                notebook_url?: string;
-                session_id?: string;
               }
             );
             break;
@@ -566,33 +593,25 @@ class NotebookLMMCPServer {
           case 'convert_note_to_source':
             result = await this.toolHandlers.handleConvertNoteToSource(
               args as {
-                note_title: string;
+                note_id: string;
                 notebook_url?: string;
                 session_id?: string;
               }
             );
             break;
 
+          // Utility Tools
+          case 'list_notebooks_from_nblm':
+            result = await this.toolHandlers.handleListNotebooksFromNblm(
+              args as { show_browser?: boolean },
+              sendProgress
+            );
+            break;
+
           default:
-            log.error(`❌ [MCP] Unknown tool: ${name}`);
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify(
-                    {
-                      success: false,
-                      error: `Unknown tool: ${name}`,
-                    },
-                    null,
-                    2
-                  ),
-                },
-              ],
-            };
+            throw new Error(`Unknown tool: ${name}`);
         }
 
-        // Return result
         return {
           content: [
             {
@@ -639,6 +658,14 @@ class NotebookLMMCPServer {
       log.info(`\n🛑 Received ${signal}, shutting down gracefully...`);
 
       try {
+        // Close health check server
+        if (this.healthCheckServer) {
+          await new Promise<void>((resolve) => {
+            this.healthCheckServer!.close(() => resolve());
+          });
+          log.info('💚 Health check server closed');
+        }
+
         // Cleanup tool handlers (closes all sessions)
         await this.toolHandlers.cleanup();
 
@@ -687,6 +714,9 @@ class NotebookLMMCPServer {
     log.info(`  Session Timeout: ${CONFIG.sessionTimeout}s`);
     log.info(`  Stealth: ${CONFIG.stealthEnabled}`);
     log.info('');
+
+    // Start HTTP health check server (non-blocking)
+    this.startHealthCheckServer();
 
     // Create stdio transport
     const transport = new StdioServerTransport();
