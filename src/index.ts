@@ -541,12 +541,11 @@ class NotebookLMMCPServer {
           case 'generate_content':
             result = await this.toolHandlers.handleGenerateContent(
               args as {
-                prompt: string;
-                content_type?: string;
+                content_type: string;
+                custom_instructions?: string;
                 notebook_url?: string;
                 session_id?: string;
-              },
-              sendProgress
+              }
             );
             break;
 
@@ -562,8 +561,8 @@ class NotebookLMMCPServer {
           case 'download_content':
             result = await this.toolHandlers.handleDownloadContent(
               args as {
-                content_id: string;
-                format?: 'txt' | 'md' | 'docx' | 'pdf';
+                content_type: string;
+                output_path?: string;
                 notebook_url?: string;
                 session_id?: string;
               }
@@ -574,8 +573,9 @@ class NotebookLMMCPServer {
           case 'create_note':
             result = await this.toolHandlers.handleCreateNote(
               args as {
+                title: string;
                 content: string;
-                title?: string;
+                notebook_url?: string;
                 session_id?: string;
               }
             );
@@ -593,7 +593,7 @@ class NotebookLMMCPServer {
           case 'convert_note_to_source':
             result = await this.toolHandlers.handleConvertNoteToSource(
               args as {
-                note_id: string;
+                note_title: string;
                 notebook_url?: string;
                 session_id?: string;
               }
