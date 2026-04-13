@@ -1,6 +1,7 @@
 FROM node:20-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV PATH=/usr/local/bin:/usr/bin:/bin:$PATH
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
@@ -24,8 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xdg-utils \
     xauth \
     wget \
-    && rm -rf /var/lib/apt/lists/* \
-    && npm install -g npm@latest
+    && rm -rf /var/lib/apt/lists/*
 
 ENV CHROME_PATH=/usr/bin/chromium
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
@@ -33,7 +33,7 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm install --only=production && npm cache clean --force
+RUN node --version && which npm && npm install --only=production && npm cache clean --force
 COPY . .
 RUN mkdir -p /root/.local/share/notebooklm-mcp
 
