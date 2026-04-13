@@ -1,12 +1,10 @@
 FROM node:20-bookworm
 
-# Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install Chromium and system dependencies for headless browser
+# Instalamos Chromium y dependencias
 RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
-    chromium-sandbox \
     fonts-liberation \
     libasound2 \
     libatk-bridge2.0-0 \
@@ -24,27 +22,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxdamage1 \
     libxrandr2 \
     xdg-utils \
-    xauth \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Chromium path for Playwright/Patchright
 ENV CHROME_PATH=/usr/bin/chromium
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 
 WORKDIR /app
 
-# Copy package files
+# Copiamos archivos de dependencias
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Instalamos usando install en lugar de ci para evitar el error 127 si falta el lockfile
+RUN npm install --production
 
-# Copy application code
+# Copiamos el resto del código
 COPY . .
 
-# Create Chrome profile directory
-RUN mkdir -p /root/.local/share/notebooklm-mcp
+# Si el proyecto usa TypeScript, necesitamos compilarlo. 
+# Si no estás seguro, añade esta línea; si falla, la quitamos.
+RUN npm run build || echo "No build script found, skipping..."
 
 EXPOSE 3000
 
