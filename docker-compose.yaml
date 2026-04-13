@@ -1,10 +1,8 @@
 services:
   notebooklm-mcp:
-    image: ghcr.io/<TU_USUARIO>/notebooklm-mcp:latest
+    build: .
     container_name: notebooklm-mcp
     restart: unless-stopped
-    ports:
-      - "3000:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -13,12 +11,6 @@ services:
     shm_size: '1gb'
     security_opt:
       - seccomp:unconfined
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
 
 volumes:
   notebooklm-data:
