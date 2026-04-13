@@ -1,40 +1,40 @@
-# Cambiamos a Alpine, que es mucho más estable para despliegues rápidos
-FROM node:20-alpine
+FROM node:20-bookworm
 
-# Instalamos dependencias para Chromium en Alpine
-RUN apk add --no-cache \
-      chromium \
-      nss \
-      freetype \
-      harfbuzz \
-      ca-certificates \
-      ttf-freefont \
-      nodejs \
-      npm
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Variables para que Playwright sepa dónde está Chromium en Alpine
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
-    CHROME_PATH=/usr/bin/chromium-browser \
-    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
-    PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium \
+    chromium-sandbox \
+    fonts-liberation \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libdrm2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libx11-xcb1 \
+    libxcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    xdg-utils \
+    xauth \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV CHROME_PATH=/usr/bin/chromium
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 
 WORKDIR /app
-
-# Copiamos solo los archivos de dependencias primero (para usar el caché)
-COPY package.json ./
-
-# Instalamos las dependencias
-# Usamos --no-audit para ir más rápido y evitar bloqueos
-RUN npm install --production --no-audit
-
-# Copiamos el resto de los archivos
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
 COPY . .
-
-# Intentamos compilar si existe el script, si no, seguimos adelante
-RUN npm run build --if-present
+RUN mkdir -p /root/.local/share/notebooklm-mcp
 
 EXPOSE 3000
-
-# Ejecutamos con la ruta completa para que no haya error 127
-CMD ["/usr/local/bin/node", "dist/index.js"]
+CMD ["node", "dist/index.js"]
