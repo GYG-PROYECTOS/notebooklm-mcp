@@ -85,8 +85,6 @@ export class AutoLoginManager {
       context = await chromium.launchPersistentContext(account.profileDir, {
         headless: !options.showBrowser,
         executablePath: '/usr/bin/chromium',
-        // @ts-expect-error - cdpPort is needed to use WebSocket instead of pipe for CDP
-        cdpPort: 9222,
         ...(CONFIG.browserChannel === 'chrome' && { channel: 'chrome' }),
         viewport: CONFIG.viewport,
         locale: browserLocale,
