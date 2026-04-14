@@ -30,6 +30,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV CHROME_PATH=/usr/bin/chromium
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+# Install chromium wrapper to fix --remote-debugging-pipe issue
+# The wrapper transforms --remote-debugging-pipe to --remote-debugging-port=9222
+COPY chromium-wrapper.sh /usr/local/bin/chromium-wrapper
+RUN chmod +x /usr/local/bin/chromium-wrapper
 
 WORKDIR /app
 COPY package*.json ./
