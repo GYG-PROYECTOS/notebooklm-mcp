@@ -104,6 +104,8 @@ export class AutoLoginManager {
           '--disable-infobars',
           '--disable-sync',
           '--log-level=3',
+          // Use WebSocket instead of pipe for CDP
+          '--remote-debugging-port=9222',
         ],
       });
 
