@@ -49,6 +49,7 @@ import { AuthManager } from './auth/auth-manager.js';
 import { SessionManager } from './session/session-manager.js';
 import { NotebookLibrary } from './library/notebook-library.js';
 import { ToolHandlers, buildToolDefinitions } from './tools/index.js';
+import type { ContentType } from './content/types.js';
 import { CONFIG } from './config.js';
 import { log } from './utils/logger.js';
 
@@ -541,7 +542,7 @@ class NotebookLMMCPServer {
           case 'generate_content':
             result = await this.toolHandlers.handleGenerateContent(
               args as {
-                content_type: string;
+                content_type: ContentType;
                 custom_instructions?: string;
                 notebook_url?: string;
                 session_id?: string;
@@ -561,7 +562,7 @@ class NotebookLMMCPServer {
           case 'download_content':
             result = await this.toolHandlers.handleDownloadContent(
               args as {
-                content_type: string;
+                content_type: ContentType;
                 output_path?: string;
                 notebook_url?: string;
                 session_id?: string;
