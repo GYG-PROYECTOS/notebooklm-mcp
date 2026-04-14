@@ -61,6 +61,48 @@ export class StartupManager {
         log.info('     - Or add credentials via account management API');
         log.info('');
 
+        // AUTO-LOGIN: If LOGIN_EMAIL + LOGIN_PASSWORD env vars are set, create account and auto-login
+        if (CONFIG.loginEmail && CONFIG.loginPassword) {
+          log.info('');
+          log.info('🔑 Auto-login credentials detected in environment variables');
+          try {
+            // Create account with credentials
+            const accountId = await this.accountManager.addAccount(
+              CONFIG.loginEmail,
+              CONFIG.loginPassword,
+              undefined, // no TOTP
+              { notes: 'Created automatically via LOGIN_EMAIL env var' }
+            );
+            log.success(`  ✅ Account created: ${maskEmail(CONFIG.loginEmail)}`);
+            // Attempt auto-login
+            const autoLoginManager = new AutoLoginManager(this.accountManager);
+            const loginResult = await autoLoginManager.performAutoLogin(accountId, {
+              showBrowser: false, // headless mode in Docker
+              timeout: CONFIG.autoLoginTimeoutMs,
+            });
+            if (loginResult.success) {
+              await this.accountManager.saveCurrentAccountId(accountId);
+              log.success('  ✅ Auto-login successful!');
+              return {
+                success: true,
+                serverStarted: true,
+                authenticated: true,
+                accountId,
+                accountEmail: CONFIG.loginEmail,
+                message: `Auto-logged in as ${maskEmail(CONFIG.loginEmail)}`,
+                details: ['Auto-login from environment variables'],
+              };
+            }
+            else {
+              log.error(`  ❌ Auto-login failed: ${loginResult.error}`);
+              log.info('     Try using /setup-auth with show_browser=true from a machine with display');
+            }
+          }
+          catch (err) {
+            log.error(`  ❌ Auto-login setup failed: ${err instanceof Error ? err.message : String(err)}`);
+          }
+        }
+
         // Check if there's a legacy state file (single account mode)
         const legacyState = await this.authManager.getValidStatePath();
         if (legacyState) {
