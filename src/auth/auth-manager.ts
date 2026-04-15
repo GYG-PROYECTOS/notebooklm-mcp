@@ -1032,7 +1032,7 @@ export class AuthManager {
 
       const context = await chromium.launchPersistentContext(CONFIG.chromeProfileDir, {
         headless: !shouldShowBrowser, // Use override or default to visible for setup
-        executablePath: '/usr/bin/chromium',
+        executablePath: '/usr/local/bin/chromium-wrapper',
         ...(CONFIG.browserChannel === 'chrome' && { channel: 'chrome' as const }),
         viewport: CONFIG.viewport,
         locale: browserLocale,
