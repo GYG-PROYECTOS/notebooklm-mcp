@@ -542,7 +542,7 @@ class NotebookLMMCPServer {
           case 'generate_content':
             result = await this.toolHandlers.handleGenerateContent(
               args as {
-                content_type: ContentType;
+                content_type: string as ContentType;
                 custom_instructions?: string;
                 notebook_url?: string;
                 session_id?: string;
@@ -562,7 +562,7 @@ class NotebookLMMCPServer {
           case 'download_content':
             result = await this.toolHandlers.handleDownloadContent(
               args as {
-                content_type: ContentType;
+                content_type: string as ContentType;
                 output_path?: string;
                 notebook_url?: string;
                 session_id?: string;
