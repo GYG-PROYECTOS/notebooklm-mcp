@@ -84,7 +84,6 @@ export class AutoLoginManager {
 
       context = await chromium.launchPersistentContext(account.profileDir, {
         headless: !options.showBrowser,
-        executablePath: '/usr/bin/chromium',
         ...(CONFIG.browserChannel === 'chrome' && { channel: 'chrome' }),
         viewport: CONFIG.viewport,
         locale: browserLocale,

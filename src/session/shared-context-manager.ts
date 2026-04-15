@@ -178,7 +178,6 @@ export class SharedContextManager {
     const browserTimezone = CONFIG.uiLocale === 'fr' ? 'Europe/Paris' : 'America/New_York';
 
     const launchOptions = {
-      executablePath: '/usr/local/bin/chromium-wrapper',
       headless: shouldBeHeadless,
       ...(CONFIG.browserChannel === 'chrome' && { channel: 'chrome' as const }),
       viewport: CONFIG.viewport,
