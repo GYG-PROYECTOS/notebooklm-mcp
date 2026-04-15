@@ -6,8 +6,9 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-    ports:
-      - '3000:3000'
+      - AUTO_LOGIN_ENABLED=${AUTO_LOGIN_ENABLED}
+      - LOGIN_EMAIL=${LOGIN_EMAIL}
+      - LOGIN_PASSWORD=${LOGIN_PASSWORD}
     volumes:
       - notebooklm-data:/root/.local/share/notebooklm-mcp
     shm_size: '1gb'
