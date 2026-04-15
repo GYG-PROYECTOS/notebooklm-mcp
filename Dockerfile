@@ -40,6 +40,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN node --version && which npm && npm install && npm cache clean --force
 COPY . .
+RUN npx playwright install chromium
 RUN mkdir -p /root/.local/share/notebooklm-mcp && npm run build
 
 EXPOSE 3000
