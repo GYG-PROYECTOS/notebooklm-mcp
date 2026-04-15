@@ -539,16 +539,19 @@ class NotebookLMMCPServer {
             );
             break;
 
-          case 'generate_content':
-            result = await this.toolHandlers.handleGenerateContent(
-              args as {
-                content_type: string as ContentType;
-                custom_instructions?: string;
-                notebook_url?: string;
-                session_id?: string;
-              }
-            );
+          case 'generate_content': {
+            const genArgs = args as {
+              content_type: string;
+              custom_instructions?: string;
+              notebook_url?: string;
+              session_id?: string;
+            };
+            result = await this.toolHandlers.handleGenerateContent({
+              ...genArgs,
+              content_type: genArgs.content_type as ContentType,
+            });
             break;
+          }
 
           case 'list_content':
             result = await this.toolHandlers.handleListContent(
@@ -559,16 +562,19 @@ class NotebookLMMCPServer {
             );
             break;
 
-          case 'download_content':
-            result = await this.toolHandlers.handleDownloadContent(
-              args as {
-                content_type: string as ContentType;
-                output_path?: string;
-                notebook_url?: string;
-                session_id?: string;
-              }
-            );
+          case 'download_content': {
+            const dlArgs = args as {
+              content_type: string;
+              output_path?: string;
+              notebook_url?: string;
+              session_id?: string;
+            };
+            result = await this.toolHandlers.handleDownloadContent({
+              ...dlArgs,
+              content_type: dlArgs.content_type as ContentType,
+            });
             break;
+          }
 
           // Studio Tools
           case 'create_note':
