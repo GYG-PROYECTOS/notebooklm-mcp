@@ -7,20 +7,19 @@ services:
       - NODE_ENV=production
       - PORT=3000
     ports:
-      - "3000:3000"
+      - '3000:3000'
     volumes:
-      - ./accounts.json:/app/accounts.json:ro
-      - notebookmm-data:/root/.local/share/notebooklm-mcp
+      - notebooklm-data:/root/.local/share/notebooklm-mcp
     shm_size: '1gb'
     security_opt:
       - seccomp:unconfined
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose","--tries=1", "--spider", "http://localhost:3000/health"]
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/health']
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
 
 volumes:
-  notebookmm-data:
+  notebooklm-data:
     driver: local
