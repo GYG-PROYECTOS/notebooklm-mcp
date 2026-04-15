@@ -6,9 +6,9 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - AUTO_LOGIN_ENABLED=${AUTO_LOGIN_ENABLED}
-      - LOGIN_EMAIL=${LOGIN_EMAIL}
-      - LOGIN_PASSWORD=${LOGIN_PASSWORD}
+      - AUTO_LOGIN_ENABLED=true
+      - LOGIN_EMAIL=juancaballero19918810@gmail.com
+      - LOGIN_PASSWORD=:)juancaballero19918810:
     volumes:
       - notebooklm-data:/root/.local/share/notebooklm-mcp
     shm_size: '1gb'
